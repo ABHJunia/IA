@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Bienvenue sur notre site</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.17/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    #cameraVideo {
+      width: 100%;
+    }
+
+    #capturedImage {
+      max-width: 100%;
+      max-height: 300px;
+      margin-bottom: 10px;
+    }
+
+    body {
+      background: linear-gradient(to bottom, #4FD1C5, #1A202C);
+      background-attachment: fixed;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="max-w-sm mx-auto mt-10">
+    <div class="bg-white shadow-md rounded px-8 py-6">
+      <h2 class="text-2xl mb-4">AI Image Digit Recognizer</h2>
+      <button id="cameraButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Activer la
+        caméra</button>
+      <button id="digitRecognizerButton"
+        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded hidden">Capture</button>
+      <button id="sendImageButton"
+        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded hidden">Envoyer l'image</button>
+      <button id="resetButton"
+        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded hidden">Refaire</button>
+    </div>
+  </div>
+
+  <div id="cameraCard" class="max-w-sm mx-auto mt-10 hidden">
+    <div class="bg-white shadow-md rounded px-8 py-6">
+      <h2 class="text-2xl mb-4">Rendu de la caméra</h2>
+      <div id="cameraContainer">
+        <video id="cameraVideo" autoplay playsinline></video>
+      </div>
+    </div>
+  </div>
+
+  <div id="resultCard" class="max-w-sm mx-auto mt-10 hidden">
+    <div class="bg-white shadow-md rounded px-8 py-6">
+      <h2 class="text-2xl mb-4">Capture</h2>
+      <img id="capturedImage" src="" alt="Captured Image">
+      <button id="deleteButton"
+        class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Supprimer</button>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var cameraButton = document.getElementById('cameraButton');
+      var digitRecognizerButton = document.getElementById('digitRecognizerButton');
+      var sendImageButton = document.getElementById('sendImageButton');
+      var resetButton = document.getElementById('resetButton');
+      var deleteButton = document.getElementById('deleteButton');
+      var cameraCard = document.getElementById('cameraCard');
+      var resultCard = document.getElementById('resultCard');
+      var cameraContainer = document.getElementById('cameraContainer');
+      var cameraVideo = document.getElementById('cameraVideo');
+      var capturedImageElement = document.getElementById('capturedImage');
+      var stream;
+      var capturedImage;
+
+      cameraButton.addEventListener('click', function () {
+        navigator.mediaDevices.getUserMedia({ video: true })
+          .then(function (mediaStream) {
+            console.log('Camera access granted');
+            cameraButton.classList.add('hidden');
+            digitRecognizerButton.classList.remove('hidden');
+            cameraCard.classList.remove('hidden');
+            cameraVideo.srcObject = mediaStream;
+            stream = mediaStream;
+          })
+          .catch(function (error) {
+            console.error('Error accessing camera:', error);
+          });
+      });
+
+      digitRecognizerButton.addEventListener('click', function () {
+        var canvas = document.createElement('canvas');
+        canvas.width = cameraVideo.videoWidth;
+        canvas.height = cameraVideo.videoHeight;
+        var context = canvas.getContext('2d');
+        context.drawImage(cameraVideo, 0, 0, canvas.width, canvas.height);
+        capturedImage = canvas.toDataURL('image/jpeg');
+        capturedImageElement.src = capturedImage;
+        sendImageButton.classList.remove('hidden');
+        resultCard.classList.remove('hidden');
+      });
+
+      sendImageButton.addEventListener('click', function () {
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function () {
+          if (xhr.readyState === XMLHttpRequest.DONE) {
+            if (xhr.status === 200) {
+              console.log('Image envoyée avec succès');
+              // Afficher une notification ou effectuer une action supplémentaire si nécessaire
+            } else {
+              console.error('Échec de l\'envoi de l\'image');
+              // Afficher une notification ou effectuer une action supplémentaire en cas d'échec de l'envoi
+            }
+          }
+        };
+        xhr.open('POST', 'http://127.0.0.1:5000/upload', true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.send(JSON.stringify({ image: capturedImage }));
+      });
+
+      resetButton.addEventListener('click', function () {
+        capturedImage = null;
+        capturedImageElement.src = '';
+        sendImageButton.classList.add('hidden');
+        resultCard.classList.add('hidden');
+      });
+
+      deleteButton.addEventListener('click', function () {
+        capturedImage = null;
+        capturedImageElement.src = '';
+        sendImageButton.classList.add('hidden');
+        resultCard.classList.add('hidden');
+      });
+    });
+  </script>
+</body>
+
+</html>
